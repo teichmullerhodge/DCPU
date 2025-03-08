@@ -7,6 +7,12 @@
 #define MAX_ACC_MEMORY 512
 #define INITIAL_INSTR_QUANTITY 36
 
+#define STPINT_ADD(VAR, ADD) VAR[0] = 'A'; VAR[1] = 'D'; VAR[2] = 'D'; VAR[3] = '\0';
+#define STPINT_SUB(VAR, SUB) VAR[0] = 'S'; VAR[1] = 'U'; VAR[2] = 'B'; VAR[3] = '\0';
+#define STPINT_LOAD(VAR, LOAD) VAR[0] = 'L'; VAR[1] = 'O'; VAR[2] = 'A'; VAR[3] = 'D'; VAR[4] = '\0';
+
+
+
 typedef enum {
 
     LOAD,
@@ -81,7 +87,7 @@ bool ASSIGN_INSTRUCTIONS(DCPU* CPU){
 void DCPU_EXEC(DCPU* CPU, DCPU_INST instruction, unsigned value){
 
     if(instruction == NOP){
-        return;
+         return;
     }
 
     switch (instruction){
@@ -107,7 +113,7 @@ void DCPU_EXEC(DCPU* CPU, DCPU_INST instruction, unsigned value){
 void delay(long long T){
 
     while(T > 0){
-        DCPU_EXEC(NULL, NOP, 0);
+        asm("nop");
         T--;
     }
 }
@@ -116,25 +122,31 @@ void delay(long long T){
 void main_loop(DCPU *CPU){
     
     srand(time(NULL));
-
+    char instruction[5];
 
     while(1){
 
-        int randomInstruction = rand() % 2;
+        int randomInstruction = rand() % 3;
         int randomValue = rand() % MAX_ACC_MEMORY;
         if(randomInstruction == 0){
             DCPU_EXEC(CPU, ADD, randomValue);
+            STPINT_ADD(instruction, ADD);
         }
         if(randomInstruction == 1){
             DCPU_EXEC(CPU, SUB, randomValue);
+            STPINT_SUB(instruction, SUB);
+
         }
         if(randomInstruction == 2){
             DCPU_EXEC(CPU, LOAD, randomValue);
+            STPINT_LOAD(instruction, LOAD);
+
         }
 
         assert((int)CPU->Register.ACC >= 0 && CPU->Register.ACC <= MAX_ACC_MEMORY);
         assert(CPU->Register.IC < CPU->INSTRUCTIONS_SIZE);
-        
+
+        printf("[CPU INSTRUCTION] -> [%s, %d]\n", instruction, randomValue);
         printf("[CPU STATUS] -> ACC: %d, IC: %ld, IS: %ld\n", CPU->Register.ACC, CPU->Register.IC, CPU->INSTRUCTIONS_SIZE);
         delay(1000000); // So i can see it. It's too fast.
     }
